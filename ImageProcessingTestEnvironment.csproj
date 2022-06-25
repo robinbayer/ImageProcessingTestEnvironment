@@ -15,6 +15,7 @@
     <None Remove="Microsoft.Extensions.Configuration.FileExtensions" />
     <None Remove="Microsoft.Extensions.Configuration.Json" />
     <None Remove="SixLabors.ImageSharp" />
+    <None Remove="Newtonsoft.Json" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="6.0.1" />
@@ -22,5 +23,9 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.FileExtensions" Version="6.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="6.0.0" />
     <PackageReference Include="SixLabors.ImageSharp" Version="2.1.3" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\TequaCreek_GH\WGODataModelLibrary\WGODataModelLibrary.csproj" />
   </ItemGroup>
 </Project>

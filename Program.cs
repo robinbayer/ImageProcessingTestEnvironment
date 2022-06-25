@@ -6,6 +6,7 @@ using System.IO.Compression;
 using System.Security.Cryptography;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
+using Newtonsoft.Json;
 
 namespace ImageProcessingTestEnvironment
 {
@@ -44,27 +45,39 @@ namespace ImageProcessingTestEnvironment
             int currentRowForEncodedBand;
             int currentArrayIndex;
             string inputFileName;
-            byte[] rgbValuesForRow = null;
+            byte[] rgbValuesForRow;
+            TequaCreek.WGODataModelLibrary.Models.EncodedImage encodedImage;
 
             // TEMP CODE
             inputFileName = "/Users/robinbayer/Documents/junk/radar.tif";
-            rowsPerEncodededBand = 3;
+            rowsPerEncodededBand = 400;
 
             // END TEMP CODE
 
 
+            encodedImage = new TequaCreek.WGODataModelLibrary.Models.EncodedImage();
+
+
             using Image<Rgba32> image = Image.Load<Rgba32>(inputFileName);
+
+
             image.ProcessPixelRows(accessor =>
             {
+
+                encodedImage.imageHeightPixels = accessor.Height;
+                encodedImage.imageHeightPixels = accessor.Width;
+                encodedImage.pixelRowsPerEncodedBand = rowsPerEncodededBand;
+
                 currentRowForEncodedBand = 1;
                 for (int y = 0; y < accessor.Height; y++)
                 {
-                    Span<Rgba32> pixelRow = accessor.GetRowSpan(y);
-                    rgbValuesForRow = new byte[pixelRow.Length * 3 * rowsPerEncodededBand];      // storing RGB byte value for each pixel
-                    totalUncompressedBytes += rgbValuesForRow!.Length * 3;
 
                     currentArrayIndex = 0;
                     currentRowForEncodedBand = 1;
+
+                    Span<Rgba32> pixelRow = accessor.GetRowSpan(y);
+                    totalUncompressedBytes += pixelRow.Length * 3;
+                    rgbValuesForRow = new byte[pixelRow.Length * 3 * rowsPerEncodededBand];      // storing RGB byte value for each pixel
 
                     while (currentRowForEncodedBand <= rowsPerEncodededBand)
                     {
@@ -81,20 +94,24 @@ namespace ImageProcessingTestEnvironment
                             rgbValuesForRow[currentArrayIndex++] = pixel.B;
                         }
 
+
+                        y++;
+                        if (y < accessor.Height)
+                        {
+                            pixelRow = accessor.GetRowSpan(y);
+                            totalUncompressedBytes += pixelRow.Length * 3;
+                        }
                         currentRowForEncodedBand++;
                     }       // while (currentRowForEncodedBand <= rowsPerEncodededBand)
 
                     byte[] compressedBase64ByteArray = CompressByteArray(rgbValuesForRow!);
 
-                    // TEMP CODE
-                    //Console.WriteLine(System.Text.Encoding.Default.GetString(compressedBase64ByteArray));
+                    //string S = Encoding.UTF8.GetString(B)
 
-                    //Console.WriteLine("Compressed from {0} bytes to {1} bytes", rgbValuesForRow.Length, compressedBase64ByteArray.Length);
+                    encodedImage.encodedBands.Add(Convert.ToBase64String(compressedBase64ByteArray, 0,
+                                                  compressedBase64ByteArray.Length, Base64FormattingOptions.None));
 
                     totalCompressedBytes += compressedBase64ByteArray.Length;
-
-                    // END TEMP CODE
-
 
                 }       // for (int y = 0; y < accessor.Height; y++)
 
@@ -103,6 +120,20 @@ namespace ImageProcessingTestEnvironment
             Console.WriteLine("Compressed from {0} bytes to {1} bytes - {2}% compression", totalUncompressedBytes, totalCompressedBytes,
                               (1 - (float)totalCompressedBytes / (float)totalUncompressedBytes) * 100);
             Console.ReadKey();
+
+
+
+            // TEMP CODE
+
+            // serialize JSON directly to a file
+            using (StreamWriter file = File.CreateText("/Users/robinbayer/Documents/junk/encodedImage.json"))
+            {
+                JsonSerializer serializer = new JsonSerializer();
+                serializer.Serialize(file, encodedImage);
+            }
+
+            // END TEMP CODE
+
 
         }       // Execute()
 
